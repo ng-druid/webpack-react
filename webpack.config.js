@@ -5,20 +5,46 @@ const webpack = require("webpack");
 const TerserWebpackPlugin = require("terser-webpack-plugin");
 // const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 const CssMinimizerWebpackPlugin = require("css-minimizer-webpack-plugin");
+const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
 
 module.exports = function(_env, argv) {
   const isProduction = argv.mode === "production";
   const isDevelopment = !isProduction;
 
   return {
-    devtool: isDevelopment && "cheap-module-source-map",
-    entry: "./src/index.js",
-    output: {
+    // devtool: isDevelopment && "cheap-module-source-map",
+    // entry: "./src/index.js",
+    /*output: {
       path: path.resolve(__dirname, "dist"),
       filename: "assets/js/[name].[contenthash:8].js",
       publicPath: "/"
-    },
+    },*/
+    mode: 'development',
     module: {
+      rules: [
+        {
+          /* The following line to ask babel 
+               to compile any file with extension
+               .js */
+          test: /\.js?$/,
+  
+          /* exclude node_modules directory from babel. 
+              Babel will not compile any files in this directory*/
+          exclude: /node_modules/,
+  
+          // To Use babel Loader
+          loader:
+            'babel-loader',
+          options: {
+            presets: [
+              '@babel/preset-env' /* to transfer any advansed ES to ES5 */,
+              '@babel/preset-react',
+            ], // to compile react to ES5
+          },
+        },
+      ]
+    },
+    /*module: {
       rules: [
         {
           test: /\.jsx?$/,
@@ -61,12 +87,27 @@ module.exports = function(_env, argv) {
           }
         }
       ]
-    },
-    resolve: {
+    },*/
+    /*resolve: {
       extensions: [".js", ".jsx"]
-    },
+    },*/
     plugins: [
-      isProduction &&
+      new ModuleFederationPlugin(
+        {
+          name: 'mfe_react_spear',
+          filename:
+            'remoteEntry.js',
+          exposes: {
+            './Button':
+              './src/Button',
+          },
+        }
+      ),
+      new HtmlWebpackPlugin({
+        template:
+          './public/index.html',
+      }),
+      /*isProduction &&
         new MiniCssExtractPlugin({
           filename: "assets/css/[name].[contenthash:8].css",
           chunkFilename: "assets/css/[name].[contenthash:8].chunk.css"
@@ -79,9 +120,9 @@ module.exports = function(_env, argv) {
         "process.env.NODE_ENV": JSON.stringify(
           isProduction ? "production" : "development"
         )
-      })
-    ].filter(Boolean),
-    optimization: {
+      })*/
+    ],//.filter(Boolean),
+    /*optimization: {
       minimize: isProduction,
       minimizer: [
         new TerserWebpackPlugin({
@@ -123,11 +164,11 @@ module.exports = function(_env, argv) {
         }
       },
       runtimeChunk: "single"
-    },
+    },*/
     devServer: {
-      compress: true,
-      historyApiFallback: true,
-      open: true
+      // compress: true,
+      // historyApiFallback: true,
+      // open: true
       // overlay: true
     }
   };
